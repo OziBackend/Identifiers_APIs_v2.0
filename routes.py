@@ -37,7 +37,7 @@ def setup_routes(app):
         if file.filename == '':
             return jsonify({'error': 'No selected file'}), 400
         
-        logger.info(f"API called 'identify_dog_breed'")
+        # logger.info(f"API called 'identify_dog_breed'")
 
         return_data = {}
         additional_data = {

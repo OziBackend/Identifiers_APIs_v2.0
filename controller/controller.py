@@ -75,6 +75,7 @@ def dog_breed_identification(app, data, return_data, logger):
 
                 breed, confidence = predict_breed(file_path, dog_breeds)
                 return_data['response']= f"The predicted breed is {breed} with probability {confidence*100:.2f}"
+                logger.info(f"The predicted breed is {breed} with probability {confidence*100:.2f}")
                 return_data['breed']= breed
                 # return_data['confidence']= confidence
                 # return_data['response']= ""
