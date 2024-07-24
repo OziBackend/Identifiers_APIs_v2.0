@@ -1,0 +1,3 @@
+2024-07-24 14:57:51,933 - ERROR - 1... Exception thrown in insect_identification = list index out of range
+2024-07-24 15:00:12,527 - ERROR - 1... Exception thrown in insect_identification = list index out of range
+2024-07-24 18:12:03,808 - ERROR - 3... Exception thrown in find_insect_image_and_info = 'dict' object has no attribute 'append'

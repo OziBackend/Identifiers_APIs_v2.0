@@ -5,7 +5,7 @@ import tensorflow as tf
 from werkzeug.utils import secure_filename
 import os
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'uploads/dogs'
 
 # Load the TFLite model and allocate tensors.
 interpreter = tf.lite.Interpreter(model_path="models/Dog_Training_Data_graph.lite")

@@ -9,3 +9,19 @@
 2024-07-12 14:46:41,385 - INFO - API called 'identify_dog_breed'
 2024-07-12 14:47:44,887 - INFO - API called 'identify_dog_breed'
 2024-07-12 14:48:04,481 - INFO - API called 'identify_dog_breed'
+2024-07-24 15:00:58,095 - INFO - The predicted insect is Phanaeus vindex with probability 8700.00
+2024-07-24 15:02:00,535 - INFO - The predicted insect is Phanaeus vindex with probability 8700.00
+2024-07-24 15:02:29,491 - INFO - The predicted insect is Necrophila americana with probability 8400.00
+2024-07-24 15:03:32,685 - INFO - The predicted insect is Necrophila americana with probability 8400.00
+2024-07-24 15:04:18,231 - INFO - The predicted insect is Necrophila americana with probability 8400.00
+2024-07-24 15:05:03,765 - INFO - The predicted insect is Necrophila americana with probability 8400.00
+2024-07-24 15:05:51,682 - INFO - The predicted insect is Necrophila americana with probability 8400.00
+2024-07-24 15:06:57,248 - INFO - The predicted insect is Necrophila americana with probability 8400.00
+2024-07-24 15:07:57,770 - INFO - The predicted insect is Necrophila americana with probability 8400.00
+2024-07-24 15:09:20,027 - INFO - The predicted insect is Necrophila americana with probability 8400.00
+2024-07-24 15:10:02,373 - INFO - The predicted insect is Necrophila americana with probability 8400.00
+2024-07-24 15:13:32,324 - INFO - The predicted insect is Phanaeus vindex with probability 8700.00
+2024-07-24 17:08:34,697 - INFO - The predicted insect is Phanaeus vindex with probability 17100.00
+2024-07-24 17:09:12,364 - INFO - The predicted insect is Phanaeus vindex with probability 17100.00
+2024-07-24 17:39:46,660 - INFO - The predicted insect is Popillia japonica with probability 3400.00
+2024-07-24 17:41:37,519 - INFO - The predicted insect is Popillia japonica with probability 3400.00

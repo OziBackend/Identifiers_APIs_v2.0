@@ -1,9 +1,12 @@
 from flask import jsonify, request, Response
 
 # from helpers import some_helper_function
-from controller.controller import (
-    dog_breed_identification
+from controller.dog_controller import dog_breed_identification
+from controller.insect_controller import (
+    insect_identification,
+    find_insect_image_and_info
 )
+
 import threading
 import re
 import time
@@ -21,14 +24,11 @@ def setup_routes(app):
         return "Hello, world!"
 
     #==========================================================================#
-    # Shayari Routes: Urdu Shayari APIs using ChatGPT
+    # Function
     #==========================================================================#
-    
-    @app.route("/identifiers/ai/dog_breed_identifier", methods=["POST"])
-    def identify_dog_breed():
-        print("Funtion to identify_dog_breed called")
 
-        
+    def check_image(request):
+        obj = {}
         if 'image' not in request.files:
             return jsonify({'error': 'No image part found in request'}),400
         
@@ -37,12 +37,25 @@ def setup_routes(app):
         if file.filename == '':
             return jsonify({'error': 'No selected file'}), 400
         
-        # logger.info(f"API called 'identify_dog_breed'")
+        obj['file'] = file
+        return obj, 200
+        
+
+    #==========================================================================#
+    # Shayari Routes: Identifiers APIs
+    #==========================================================================#
+    
+    @app.route("/identifiers/ai/dog_breed_identifier", methods=["POST"])
+    def identify_dog_breed():
+        print("Funtion to identify_dog_breed called")
 
         return_data = {}
-        additional_data = {
-            "file": file
-        }
+        additional_data = {}
+
+        additional_data, status_code = check_image(request)
+        
+        if status_code != 200:
+            return jsonify({'error': 'No image part found in request'}),400
         
         # Acquire Semaphore
         print("Acquiring a Semaphore")
@@ -66,3 +79,71 @@ def setup_routes(app):
 
         return jsonify(return_data)
     
+    @app.route("/identifiers/ai/insect_identifier", methods=["POST"])
+    def identify_insect():
+        print("Funtion to identify_insect called")
+
+        return_data = {}
+        additional_data = {}
+
+        additional_data, status_code = check_image(request)
+        
+        if status_code != 200:
+            return jsonify({'error': 'No image part found in request'}),400
+
+        #Acquire Semaphore
+        print("Acquiring a Semaphore")
+        semaphores.acquire()
+
+        t = threading.Thread(
+            target=insect_identification, args=(app, additional_data, return_data, logger)
+        )
+        
+        t.start()
+        t.join()
+
+        # Release Semaphore
+        print("Releasing a Semaphore")
+        semaphores.release()
+
+        # print(return_data)
+
+        if not return_data:
+            return jsonify({"response": '' })
+
+        return return_data
+    
+    @app.route("/identifiers/ai/insect_identifier/find_image_and_info", methods=["POST"])
+    def find_insect_image_info():
+        print("Funtion to find_insect_image_and_info called")
+
+        return_data = []
+        additional_data = {}
+
+        data = request.get_json()
+        labels = data.get('labels', [])
+
+        if not labels:
+            return jsonify({'error': 'No labels found in request'}), 400
+
+        additional_data['labels'] = labels
+
+        print('Acquiring a Semaphore')
+        semaphores.acquire()
+
+        t = threading.Thread(
+            target=find_insect_image_and_info, args=(app, additional_data, return_data, logger)
+        )
+
+        t.start()
+        t.join()
+
+        print('Releasing a Semaphore')
+        semaphores.release()
+
+        print(return_data)
+
+        if not return_data:
+            return jsonify({"response": '' })
+
+        return jsonify(return_data)
