@@ -3,7 +3,12 @@ from PIL import Image
 import numpy as np
 import tensorflow as tf
 from werkzeug.utils import secure_filename
+import json
+from flask import render_template
 import os
+
+from functions.googleImagesFunction import fetch_links
+from functions.groqFunction import search_groq
 
 UPLOAD_FOLDER = 'uploads/dogs'
 
@@ -14,6 +19,8 @@ interpreter.allocate_tensors()
 # Get input and output tensors.
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
+
+#=================================================================#
 
 def load_breed_names():
     # Step 1: Open the file
@@ -61,6 +68,45 @@ def predict_breed(image_path, breeds):
     
     return breeds[breed_index], confidence
 
+#==================================#
+
+def search_image_links(query, max_links=1):
+    try:
+        return fetch_links(query, max_links)
+    except Exception as e:
+        print(e)
+        return []
+    
+def search_dog_info(prompt_value):
+    try:
+        prompt = f"""Give me the following information about {prompt_value} breed in dictionary format. The response should only contain the dictionary object, properly formatted. There should be no data other than dict object:
+        {{
+        "Name": "value",
+        "Other_Name": "value",
+        "Origin": "value",
+        "Breed_Group": "value",
+        "Size": "value",
+        "Type": "value",
+        "Life_Span": "value",
+        "Temprament": "value",
+        "Height": "value",
+        "Weight": "value",
+        "Colors": "value"
+        }}
+        """
+        info =search_groq(prompt)
+        if not info.strip().endswith('}'):
+            info = info + '}'
+        json_info = json.loads(info)
+        html_data = render_template('dogs.html', **json_info)
+        return html_data
+    except Exception as e:
+        print(e)
+        return []
+    
+
+#=================================================================#
+
 def dog_breed_identification(app, data, return_data, logger):
 
     with app.app_context():
@@ -85,3 +131,17 @@ def dog_breed_identification(app, data, return_data, logger):
             logger.error('1... Exception thrown in dog_breed_identification = %s', str(e))
             print(f"1... In dog_breed_identification exception is = {e}")
             return_data['response']= ''
+
+def dog_info_search(app, data, return_data, logger):
+    with app.app_context():
+        try:
+            dog_breeds = data.get('breeds')
+
+            for breed in dog_breeds:
+                dog_images = search_image_links(breed, 6)
+                dog_info = search_dog_info(breed)
+                return_data.append({'dog_breed': breed, 'dog_images': dog_images, 'dog_info': dog_info})
+        except BaseException as e:
+            logger.error('1... Exception thrown in dog_info_search = %s', str(e))
+            print(f"1... In dog_info_search exception is = {e}")
+            return_data=[]

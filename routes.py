@@ -1,7 +1,10 @@
 from flask import jsonify, request, Response
 
 # from helpers import some_helper_function
-from controller.dog_controller import dog_breed_identification
+from controller.dog_controller import (
+    dog_breed_identification,
+    dog_info_search
+)
 from controller.insect_controller import (
     insect_identification,
     find_insect_image_and_info
@@ -19,7 +22,7 @@ semaphores = threading.Semaphore(30)
 
 
 def setup_routes(app):
-    @app.route("/identifiers/ai")
+    @app.route("/")
     def index():
         return "Hello, world!"
 
@@ -79,6 +82,43 @@ def setup_routes(app):
 
         return jsonify(return_data)
     
+    @app.route("/identifiers/ai/dog_breed_identifier/search_dog_info", methods=["POST"])
+    def search_dog_info():
+        print("Funtion to search_dog_info called")
+
+        return_data = []
+        additional_data = {}
+
+        data = request.get_json()
+        breeds = data.get('breeds', [])
+
+        if not breeds:
+            return jsonify({'error': 'No breeds found in request'}), 400
+
+        additional_data['breeds'] = breeds
+
+        print('Acquiring a Semaphore')
+        semaphores.acquire()
+
+        t = threading.Thread(
+            target=dog_info_search, args=(app, additional_data, return_data, logger)
+        )
+
+        t.start()
+        t.join()
+
+        print('Releasing a Semaphore')
+        semaphores.release()
+
+        print(return_data)
+
+        if not return_data:
+            return jsonify({"response": '' })
+
+        return jsonify(return_data)
+
+    #==========================================================================#
+
     @app.route("/identifiers/ai/insect_identifier", methods=["POST"])
     def identify_insect():
         print("Funtion to identify_insect called")
@@ -141,9 +181,11 @@ def setup_routes(app):
         print('Releasing a Semaphore')
         semaphores.release()
 
-        print(return_data)
+        # print(return_data)
 
         if not return_data:
             return jsonify({"response": '' })
 
         return jsonify(return_data)
+
+    #==========================================================================#

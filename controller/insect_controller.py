@@ -3,24 +3,13 @@ from PIL import Image
 import numpy as np
 import tensorflow as tf
 from werkzeug.utils import secure_filename
+from flask import render_template
+import json
+
+from functions.googleImagesFunction import fetch_links
+from functions.groqFunction import search_groq
+
 import os
-import requests
-
-#===================Configuration For GROQ API======================#
-os.environ["GROQ_API_KEY"] = (
-    "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"  # Replace with your actual key
-)
-from groq import Groq
-client = Groq(
-    api_key=os.environ.get("GROQ_API_KEY"),
-)
-
-#===================Configuration For Google API===================#
-# Replace these with your own API key 
-# and Custom Search Engine ID
-API_KEY = 'AIzaSyBDtuFLLgG7x7CBiriNxiQxYiJ3jSkDqac'
-CX = '831bd8939aba44ce8'
-QUERY = ''
 
 #=================================================================#
 UPLOAD_FOLDER = 'uploads/insects'
@@ -81,28 +70,39 @@ def predict_insect(image_path, insects):
     # insects[index]
     return insects[insect_index], confidence
 
+#=========================#
+
 #Fetch images from google
-def fetch_links(query, max_links=10):
+def fetch_image_links(query, max_links=10):
     try:
-        url = f"https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={CX}&q={query}&searchType=image"
-        response = requests.get(url)
-        data = response.json()
-        images = [item['link'] for item in data.get('items', [])]
-        return images[:max_links]  # Limit the number of links
+        return fetch_links(query, max_links)
     except Exception as e:
         print(f"Error fetching images: {e}")
         return []
 
 #Fetch information from groq
-def search_groq(prompt_value):
+def search_info(prompt_value):
     try:
-        prompt = f'Give me information about {prompt_value} in 2 lines'
+        prompt = f"""Give me the following information about {prompt_value} in dictionary format. The response should only contain the dictionary object, properly formatted. There should be no data other than dict object:
+        {{
+        "Common_Name": "value",
+        "Scientific_Name": "value",
+        "Size": "value",
+        "Color": "value",
+        "Shape": "value",
+        "Habitat": "value",
+        "Diet": "value",
+        "Role_in_Ecosystem": "value",
+        "Interesting_Fact": "value"
+        }}
+        """
     
-        response = client.chat.completions.create(
-            model="llama3-8b-8192",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return response.choices[0].message.content
+        info=  search_groq(prompt)
+        if not info.strip().endswith('}'):
+            info += '}'
+        json_info = json.loads(info)
+        html_data = render_template('insects.html', **json_info)
+        return html_data
     except Exception as e:
         print(f"Error fetching information: {e}")
         return []
@@ -125,14 +125,14 @@ def insect_identification(app, data, return_data, logger):
                 return_data['confidence']= f'{confidence:.2f}'
 
                 
-                QUERY = insect
+                query_value = insect
 
                 #Fetch Limited number of images
-                images = fetch_links(QUERY, 5)
+                images = fetch_image_links(query_value, 5)
                 return_data['images']= images
 
                 #Fetch information about the insect
-                information = search_groq(QUERY)
+                information = search_info(query_value)
                 return_data['information']= information
 
                 
@@ -142,19 +142,18 @@ def insect_identification(app, data, return_data, logger):
             print(f"2... In insect_identification exception is = {e}")
             return_data['confidence']= '0.00'
 
+#=======================#
+
 def find_insect_image_and_info(app, data, return_data, logger):
     with app.app_context(): 
         try:
             insect_names = data.get('labels')
 
             for insect_name in insect_names:
-                obj = {}
-                insect_image = fetch_links(insect_name, 1)
-                insect_info = search_groq(insect_name)
-                obj['insect_name'] = insect_name
-                obj['insect_image'] = insect_image
-                obj['insect_info'] = insect_info
-                return_data.append(obj)
+                insect_image = fetch_image_links(insect_name, 6)
+                insect_info = search_info(insect_name)
+                
+                return_data.append({'insect_name': insect_name, 'insect_image': insect_image, 'insect_info': insect_info})
         except BaseException as e:
             logger.error('3... Exception thrown in find_insect_image_and_info = %s', str(e))
             print(f"3... In find_insect_image_and_info exception is = {e}")
