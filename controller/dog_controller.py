@@ -6,9 +6,12 @@ from werkzeug.utils import secure_filename
 import json
 from flask import render_template
 import os
+import requests
+import re
 
 from functions.googleImagesFunction import fetch_links
 from functions.groqFunction import search_groq
+from functions.chatgptFunction import search_gpt
 
 UPLOAD_FOLDER = 'uploads/dogs'
 
@@ -77,6 +80,45 @@ def search_image_links(query, max_links=1):
         print(e)
         return []
     
+def scrap_images(query, max_links=2):
+    search_url = f"https://www.google.com/search?tbm=isch&q={query}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    
+    response = requests.get(search_url, headers=headers)
+    # Get the response content as a string
+    html_content = response.text
+    
+    # Regular expression to find URLs in quotes
+    pattern = r'"(https://[^"]+)"'
+
+    # Find all matches in the HTML string
+    matches = re.findall(pattern, html_content)
+
+    # List of keywords to filter URLs
+    keywords = ["natgeofe.com", "britannica.com", "wikimedia.org", "images.pexels.com", "images.unsplash.com"]
+
+    # List of patterns to ignore
+    ignore_patterns = [
+        "https://www.britannica.com/animal/", 
+        "https://www.google.com/search/about-this-image"
+    ]
+
+    # Filter out URLs containing any of the keywords and not containing ignore patterns
+    urls_of_interest = [
+        url for url in matches 
+        if any(keyword in url for keyword in keywords) 
+        and not any(ignore in url for ignore in ignore_patterns)
+    ]
+    urls_of_interest = list(set(urls_of_interest))
+    # Limit the number of images
+    limited_urls = urls_of_interest[:max_links]
+
+    # print(limited_urls)
+    
+    return limited_urls
+
 def search_dog_info(prompt_value):
     try:
         prompt = f"""Give me the following information about {prompt_value} breed in dictionary format. The response should only contain the dictionary object, properly formatted. There should be no data other than dict object:
@@ -94,7 +136,7 @@ def search_dog_info(prompt_value):
         "Colors": "value"
         }}
         """
-        info =search_groq(prompt)
+        info =search_gpt(prompt)
         if not info.strip().endswith('}'):
             info = info + '}'
         json_info = json.loads(info)
@@ -138,9 +180,8 @@ def dog_info_search(app, data, return_data, logger):
             dog_breeds = data.get('breeds')
 
             for breed in dog_breeds:
-                dog_images = search_image_links(breed, 6)
                 dog_info = search_dog_info(breed)
-                return_data.append({'dog_breed': breed, 'dog_images': dog_images, 'dog_info': dog_info})
+                return_data.append({'dog_breed': breed, 'dog_info': dog_info})
         except BaseException as e:
             logger.error('1... Exception thrown in dog_info_search = %s', str(e))
             print(f"1... In dog_info_search exception is = {e}")

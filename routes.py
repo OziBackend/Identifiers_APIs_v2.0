@@ -9,6 +9,9 @@ from controller.insect_controller import (
     insect_identification,
     find_insect_image_and_info
 )
+from controller.spider_controller import (
+    find_spider_image_and_info
+)
 
 import threading
 import re
@@ -90,7 +93,7 @@ def setup_routes(app):
         additional_data = {}
 
         data = request.get_json()
-        breeds = data.get('breeds', [])
+        breeds = data.get('labels', [])
 
         if not breeds:
             return jsonify({'error': 'No breeds found in request'}), 400
@@ -181,7 +184,7 @@ def setup_routes(app):
         print('Releasing a Semaphore')
         semaphores.release()
 
-        # print(return_data)
+        print(return_data)
 
         if not return_data:
             return jsonify({"response": '' })
@@ -189,3 +192,38 @@ def setup_routes(app):
         return jsonify(return_data)
 
     #==========================================================================#
+
+    @app.route("/identifiers/ai/spider_identifier/find_image_and_info", methods=["POST"])
+    def find_spider_image_info():
+        print("Funtion to find_spider_image_and_info called")
+
+        return_data = []
+        additional_data = {}
+
+        data = request.get_json()
+        labels = data.get('labels', [])
+
+        if not labels:
+            return jsonify({'error': 'No labels found in request'}), 400
+
+        additional_data['labels'] = labels
+
+        print('Acquiring a Semaphore')
+        semaphores.acquire()
+
+        t = threading.Thread(
+            target=find_spider_image_and_info, args=(app, additional_data, return_data, logger)
+        )
+
+        t.start()
+        t.join()
+
+        print('Releasing a Semaphore')
+        semaphores.release()
+
+        print(return_data)
+
+        if not return_data:
+            return jsonify({"response": '' })
+
+        return jsonify(return_data)

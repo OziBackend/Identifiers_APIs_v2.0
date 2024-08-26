@@ -14,6 +14,7 @@ def search_groq(prompt):
             model="llama3-8b-8192",
             messages=[{"role": "user", "content": prompt}],
         )
+        print('GROQ Response',response)
         return response.choices[0].message.content
     except Exception as e:
         print(e)

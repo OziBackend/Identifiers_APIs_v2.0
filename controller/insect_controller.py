@@ -8,6 +8,7 @@ import json
 
 from functions.googleImagesFunction import fetch_links
 from functions.groqFunction import search_groq
+from functions.chatgptFunction import search_gpt
 
 import os
 
@@ -97,11 +98,12 @@ def search_info(prompt_value):
         }}
         """
     
-        info=  search_groq(prompt)
+        info=  search_gpt(prompt)
         if not info.strip().endswith('}'):
             info += '}'
         json_info = json.loads(info)
         html_data = render_template('insects.html', **json_info)
+        html_data = html_data.replace('\n', '')
         return html_data
     except Exception as e:
         print(f"Error fetching information: {e}")

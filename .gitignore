@@ -1,3 +1,5 @@
 venv_identifiers
 failure.log
 success.log
+authKeys.py
+keys
