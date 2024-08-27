@@ -2,7 +2,6 @@ from flask import render_template
 import json
 
 from functions.googleImagesFunction import fetch_links
-from functions.groqFunction import search_groq
 from functions.chatgptFunction import search_gpt
 
 import os
